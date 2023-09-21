@@ -107,7 +107,7 @@ unwind_protect_cleanup
         % Generate a unique filename with a timestamp
         filename = strcat("serialplotterdata_", datestr(now(), 'yyyymmddHHMMSS'), ".csv");
 
-        % Save your data (assuming sampleBuff is defined somewhere in your code)
+        % Save your data
         csvwrite(filename, sampleBuff');
 
         fprintf('Data exported to: %s\n', filename);
