@@ -74,10 +74,16 @@ endfor
 %% Clear the I/O buffers of the serial port to clear any old data and start reading 
 unwind_protect
 fprintf("\n");
+% Implemented in the while loop, prints port values in the command line
+fprintf("Press space to toggle data display\n");
 % If an interrupt is initiated it branches to srl_close(s1);
 fprintf("Interrupt process (Ctrl + C) to export data in CSV\n");
+% Variable to control whether to print values to the terminal
+% Pre set to false to avoid unwanted output flooding
+printToTerminal = false;
+
 srl_flush(s1);
-    while true
+    while true        
         % Read one character at a time
         data = srl_read(s1,1); 
         % If LF (end of Serial.println)        
@@ -89,6 +95,17 @@ srl_flush(s1);
             % Reset sample string
             sample = '';                                         
             sampleBuff = [cell2mat(valvec)' sampleBuff(:,1:end-1)];
+            
+            % Check if the user pressed space in the command prompt
+            if (kbhit (1) == ' ')
+              % Toggle the variable 
+              printToTerminal = ~printToTerminal;
+            end
+            % Display received data in the terminal if true
+            if printToTerminal
+                fprintf('Received data: %s\n', strjoin(values, '\t'));
+            end
+            
             % For debugging
             % fprintf('Sample Buffer Size: %dx%d\n', size(sampleBuff));
             for i=1:num_signals
