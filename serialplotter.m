@@ -1,8 +1,15 @@
+%%% A serial plotter tool made to test and plot sensor values from microcontrollers
+%%% A port scan is initiated to list the ones with connected microcontrollers
+%%% The serial port, baudrate and data delimiter are required
+%%% The delimiter must be the same with the microcontroller's 
+%%% Any delimiter aside "\t" produces unexpected results while plotting the data
+
+
 #! /usr/bin/octave -qf
 
 pkg load instrument-control;
 
-%% List all serial ports a board is connected for user to initialize connection
+%% List all serial ports a board is connected to for user to initialize connection
 serial_ports = serialportlist("available");
 fprintf('Available serial ports:\n');
 for i = 1:length(serial_ports)
@@ -32,7 +39,9 @@ s1 = serial(port, baudrate);
 srl_flush(s1);
 sample = '';
 
-% Define the way Serial.print()'s are split (either tabs "\t", spaces " " etc) depending on the code of target board
+% Define the way Serial.print()'s are split depending on the code of target board
+% It is recommended using "\t" in the microcontroller program
+% Using anything other than the escape character "\t" for delimiter produces unexpected results
 delimiter = input('Enter the signal delimiter: ', 's');
 
 %% Read one line here to figure out how many signals there are
@@ -90,7 +99,7 @@ srl_flush(s1);
         if (data != 10)                                          
            sample = strcat(sample,char(data));
         else 
-            values = strsplit(sample,"\t");
+            values = strsplit(sample,delimiter);
             valvec = cellfun(@str2num,values,'UniformOutput',false);
             % Reset sample string
             sample = '';                                         
@@ -117,12 +126,15 @@ srl_flush(s1);
 unwind_protect_cleanup
     srl_close(s1);
     fprintf ('Caught interrupt. Save data?\n');
-    choice = input('Enter "yes" to export, or any other key to skip: ', 's');
-    if strcmpi(choice, 'yes')
+    choice = input('Enter "y" to export, or any other key to skip: ', 's');
+    if strcmpi(choice, 'y')
         fprintf('Exporting data to CSV...\n');
 
-        % Generate a unique filename with a timestamp
-        filename = strcat("serialplotterdata_", datestr(now(), 'yyyymmddHHMMSS'), ".csv");
+        % Prompt the user to enter a custom filename
+        customFilename = input('Enter a custom filename (without extension): ', 's');
+    
+        % Generate the full filename with the provided custom filename and timestamp
+        filename = strcat(customFilename, '_', datestr(now(), 'yyyymmddHHMMSS'), '.csv');
 
         % Save your data
         csvwrite(filename, sampleBuff');
